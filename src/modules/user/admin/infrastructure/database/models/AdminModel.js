@@ -3,23 +3,13 @@ import { BaseUserSchema } from '../../../../shared/infrastructure/database/model
 
 const { Schema } = mongoose;
 
-// اسکیما Admin شامل فیلدهای BaseUser به علاوه فیلدهای اختصاصی
 const AdminSchema = new Schema(
   {
-    ...BaseUserSchema.obj, // اضافه کردن همه فیلدهای base
+    ...BaseUserSchema.obj,
     role: { type: String, default: 'admin', immutable: true },
-    permissions: {
-      type: [String],
-      default: [], // مثال: ['manage_users', 'manage_products']
-    },
-    managedModules: {
-      type: [String],
-      default: [], // مثال: ['users', 'orders', 'reports']
-    },
-    superAdmin: {
-      type: Boolean,
-      default: false // اگر true باشه یعنی دسترسی کامل دارد
-    }
+    permissions: { type: [String], default: [] },
+    managedModules: { type: [String], default: [] },
+    superAdmin: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

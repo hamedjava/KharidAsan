@@ -1,11 +1,26 @@
-import { BaseUserModel } from '../../../../../../../src/modules/user/shared/infrastructure/database/models/BaseUserModel.js';
 import mongoose from 'mongoose';
+import { BaseUserSchema } from '../../../../shared/infrastructure/database/models/BaseUserModel.js';
 
-const CustomerSchema = new mongoose.Schema({
-  addresses: [{ type: String }],
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
-  birthDate: { type: Date },
-  gender: { type: String, enum: ['male', 'female', 'other'] },
-});
+const { Schema } = mongoose;
 
-export const CustomerModel = BaseUserModel.discriminator('customer', CustomerSchema);
+const CustomerSchema = new Schema(
+  {
+    ...BaseUserSchema.obj,
+    role: { type: String, default: 'customer', immutable: true, required: true },
+    addresses: {
+      type: [{
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        province: { type: String, required: true },
+        postalCode: { type: String, required: true }
+      }],
+      default: []
+    },
+    wishlist: { type: [Schema.Types.ObjectId], ref: 'Product', default: [] },
+    birthDate: { type: Date },
+    gender: { type: String, enum: ['male', 'female', 'other'] }
+  },
+  { timestamps: true }
+);
+
+export const CustomerModel = mongoose.model('Customer', CustomerSchema);

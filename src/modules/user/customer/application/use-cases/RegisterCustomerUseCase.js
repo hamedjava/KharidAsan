@@ -5,18 +5,16 @@ export class RegisterCustomerUseCase {
     this.customerRepository = customerRepository;
   }
 
-  async execute({ fullName, mobile, email, password }) {
-    const existingUser = await this.customerRepository.findByMobile(mobile);
-    if (existingUser) throw new Error('Mobile number already registered');
+  async execute(data) {
+    const existingUser = await this.customerRepository.findByMobile(data.mobile);
+    if (existingUser) {
+      throw new Error('Mobile already in use');
+    }
 
-    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
-
+    const passwordHash = await bcrypt.hash(data.password, 10);
     return await this.customerRepository.create({
-      fullName,
-      mobile,
-      email,
-      passwordHash,
-      role: 'customer',
+      ...data,
+      passwordHash
     });
   }
 }
