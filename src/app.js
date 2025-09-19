@@ -12,7 +12,8 @@ import dotenv from 'dotenv';
 // ===========================
 // مسیر محصول (Product Module)
 import productRoutes from './modules/product/interfaces/routes/productRoutes.js';
-
+import sellerRoutes from './modules/user/seller/interfaces/routes/sellerRoutes.js';
+import authRoutes from './modules/user/shared/interfaces/routes/authRoutes.js';
 // بارگذاری متغیرهای محیطی
 dotenv.config();
 
@@ -42,7 +43,8 @@ app.get('/health', (req, res) => {
 // 🛣 افزودن روت‌های ماژول‌ها
 // =========================================
 app.use('/api/products', productRoutes);
-
+app.use('/api/sellers', sellerRoutes);
+app.use('/api/auth', authRoutes);
 // اینجا می‌توان ماژول‌های دیگر را اضافه کرد:
 // app.use('/api/users', userRoutes);
 // app.use('/api/orders', orderRoutes);
