@@ -1,18 +1,15 @@
 // مسیر فایل: src/modules/product/application/usecases/CreateProductUseCase.js
+// وظایف: سناریوی ایجاد محصول جدید. تعامل با Repository و تبدیل داده به Entity.
 
-// توضیح: این کلاس مسئول منطق ساخت یک محصول جدید است.
+import ProductEntity from '../../domain/ProductEntity.js';
+
 export default class CreateProductUseCase {
-    constructor(productRepository) {
-      this.productRepository = productRepository;
-    }
-  
-    async execute(productData) {
-      // اعتبارسنجی اولیه — اینجا می‌توانیم از DTO یا Validator استفاده کنیم
-      if (!productData.name || !productData.price) {
-        throw new Error('نام و قیمت محصول الزامی است');
-      }
-  
-      return await this.productRepository.create(productData);
-    }
+  constructor(productRepository) {
+    this.productRepository = productRepository;
   }
-  
+
+  async execute(productData) {
+    const productEntity = new ProductEntity(productData);
+    return await this.productRepository.create(productEntity);
+  }
+}

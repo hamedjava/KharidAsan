@@ -8,14 +8,11 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 // ===========================
-// 📂 وارد کردن مسیرهای ماژول‌ها
+// 📂 وارد کردن ماژول‌ها
 // ===========================
-// مسیر محصول (Product Module)
-import productRoutes from './modules/product/interfaces/routes/productRoutes.js';
-import sellerRoutes from './modules/user/seller/interfaces/routes/sellerRoutes.js';
-import customerRoutes from './modules/user/customer/interfaces/routes/customerRoutes.js';
-import adminRoutes from './modules/user/admin/interfaces/routes/adminRoutes.js';
-import authRoutes from './modules/user/shared/interfaces/routes/authRoutes.js';
+// ماژول محصول (Product Module)
+import ProductModule from './modules/product/index.js';
+
 // بارگذاری متغیرهای محیطی
 dotenv.config();
 
@@ -42,16 +39,13 @@ app.get('/health', (req, res) => {
 });
 
 // =========================================
-// 🛣 افزودن روت‌های ماژول‌ها
+// 🛣 افزودن روت‌های ماژول‌ها با الگوی ماژولار
 // =========================================
-app.use('/api/products', productRoutes);
-app.use('/api/sellers', sellerRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/admins', adminRoutes);
-app.use('/api/auth', authRoutes);
+ProductModule.registerProductModule(app);
+
 // اینجا می‌توان ماژول‌های دیگر را اضافه کرد:
-// app.use('/api/users', userRoutes);
-// app.use('/api/orders', orderRoutes);
+// UserModule.registerUserModule(app);
+// OrderModule.registerOrderModule(app);
 
 // ===========================
 // ⚡ اتصال به دیتابیس و راه‌اندازی سرور
@@ -71,6 +65,6 @@ mongoose.connect(MONGO_URI)
   });
 
 // ===========================
-// 📤 خروجی گرفتن از app (اختیاری)
+// 📤 خروجی گرفتن از app (برای تست‌های خودکار)
 // ===========================
 export default app;
