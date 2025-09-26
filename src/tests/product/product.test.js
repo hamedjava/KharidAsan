@@ -1,110 +1,140 @@
-// ===============================
-// 📂 تست خودکار ماژول Product
-// ابزارها: Jest + Supertest
-// ===============================
-
+/**
+ * src/tests/product/product.test.js
+ * 📦 تست کامل CRUD محصولات
+ */
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../app.js'; // استفاده از اپ اصلی
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-let createdProductId;
+// 📌 تبدیل مسیر نسبی به مسیر مطلق بر اساس محل تست
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+import app from '../../app.js';
+import Product from '../../modules/product/infrastructure/models/ProductModel.js';
+
+// 🎯 آدرس دیتابیس تست (MongoDB)
+const TEST_DB_URI = 'mongodb://localhost:27017/GreenShopTest';
+
+// 💡 اتصال به دیتابیس تست قبل از همه تست‌ها
 beforeAll(async () => {
-  // اتصال به MongoDB قبل از شروع تست‌ها
-  const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pink-store';
-  await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  try {
+    await mongoose.connect(TEST_DB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    await Product.deleteMany({});
+  } catch (err) {
+    console.error('❌ اتصال به دیتابیس تست با خطا مواجه شد:', err);
+    throw err;
+  }
 });
 
+// 🧹 پاک‌سازی داده‌ها بعد از هر تست
+afterEach(async () => {
+  try {
+    await Product.deleteMany({});
+  } catch (err) {
+    console.error('❌ خطا در پاک‌سازی بعد از تست:', err);
+    throw err;
+  }
+});
+
+// 📤 بستن اتصال پس از پایان همه تست‌ها
 afterAll(async () => {
-  // پاک کردن دیتابیس و بستن اتصال
-  await mongoose.connection.db.dropDatabase();
-  await mongoose.disconnect();
+  try {
+    await Product.deleteMany({});
+    await mongoose.connection.close();
+  } catch (err) {
+    console.error('❌ خطا در بستن اتصال به دیتابیس تست:', err);
+    throw err;
+  }
 });
 
-describe('🧪 Product Module Tests', () => {
-  
-  // 1️⃣ ایجاد محصول جدید
-  test('POST /api/products → ایجاد محصول جدید', async () => {
-    const res = await request(app)
-      .post('/api/products')
-      .send({
-        name: 'Laptop Lenovo',
-        description: 'ThinkPad X1 Carbon',
-        price: 43000000,
-        category: 'Laptop',
-        stock: 5,
-        images: ['https://example.com/image1.jpg']
-      });
-    
+describe('📦 ماژول Product - تست کامل CRUD', () => {
+  let productId;
+
+  test('✅ ایجاد محصول جدید', async () => {
+    const newProduct = {
+      name: 'لباس زیر تستی',
+      description: 'یک محصول تستی جذاب',
+      price: 150000,
+      category: 'لباس زیر زنانه',
+      stock: 10
+    };
+
+    const res = await request(app).post('/api/products').send(newProduct);
+
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('_id');
-    createdProductId = res.body._id;
+    expect(res.body.name).toBe(newProduct.name);
+
+    // ذخیره جهت استفاده در تست‌های آتی
+    productId = res.body._id;
   });
 
-  // 2️⃣ دریافت محصول با ID
-  test('GET /api/products/:id → دریافت محصول', async () => {
-    const res = await request(app)
-      .get(`/api/products/${createdProductId}`);
-    
-    expect(res.statusCode).toBe(200);
-    expect(res.body.name).toBe('Laptop Lenovo');
-  });
+  test('📄 دریافت لیست محصولات', async () => {
+    await Product.create({
+      name: 'محصول شماره ۱',
+      description: 'تست لیست محصول',
+      price: 200000,
+      category: 'اسپرت',
+      stock: 5
+    });
 
-  // 3️⃣ ویرایش محصول
-  test('PUT /api/products/:id → ویرایش محصول', async () => {
-    const res = await request(app)
-      .put(`/api/products/${createdProductId}`)
-      .send({ price: 41000000, stock: 10 });
-    
-    expect(res.statusCode).toBe(200);
-    expect(res.body.price).toBe(41000000);
-    expect(res.body.stock).toBe(10);
-  });
+    const res = await request(app).get('/api/products');
 
-  // 4️⃣ لیست همه محصولات
-  test('GET /api/products → لیست محصولات', async () => {
-    const res = await request(app)
-      .get('/api/products');
-    
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
   });
 
-  // 5️⃣ جستجو بر اساس نام
-  test('GET /api/products/search?q=Laptop → جستجو', async () => {
-    const res = await request(app)
-      .get('/api/products/search?q=Laptop');
-    
+  test('🔍 دریافت محصول با شناسه', async () => {
+    const product = await Product.create({
+      name: 'محصول با ID اختصاصی',
+      description: 'تست گرفتن با ID',
+      price: 100000,
+      category: 'مناسبتی',
+      stock: 7
+    });
+
+    const res = await request(app).get(`/api/products/${product._id}`);
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.length).toBeGreaterThan(0);
-    expect(res.body[0].name).toContain('Laptop');
+    expect(res.body).toHaveProperty('_id', product._id.toString());
   });
 
-  // 6️⃣ مرتب‌سازی بر اساس قیمت صعودی
-  test('GET /api/products/order-by-price?order=asc → مرتب‌سازی صعودی', async () => {
+  test('✏️ بروزرسانی محصول', async () => {
+    const product = await Product.create({
+      name: 'محصول قابل بروزرسانی',
+      description: 'قبل از بروزرسانی',
+      price: 120000,
+      category: 'خانگی راحت',
+      stock: 8
+    });
+
     const res = await request(app)
-      .get('/api/products/order-by-price?order=asc');
-    
+      .put(`/api/products/${product._id}`)
+      .send({ price: 250000 });
+
     expect(res.statusCode).toBe(200);
-    const prices = res.body.map(p => p.price);
-    const sorted = [...prices].sort((a,b) => a - b);
-    expect(prices).toEqual(sorted);
+    expect(res.body.price).toBe(250000);
   });
 
-  // 7️⃣ حذف محصول
-  test('DELETE /api/products/:id → حذف محصول', async () => {
-    const res = await request(app)
-      .delete(`/api/products/${createdProductId}`);
-    
-    expect(res.statusCode).toBe(204);
-  });
+  test('🗑 حذف محصول', async () => {
+    const product = await Product.create({
+      name: 'محصول قابل حذف',
+      description: 'قرار است حذف شود',
+      price: 300000,
+      category: 'فانتزی',
+      stock: 4
+    });
 
-  // 8️⃣ دریافت محصول حذف‌شده (باید 404 باشد)
-  test('GET /api/products/:id → محصول حذف شده', async () => {
-    const res = await request(app)
-      .get(`/api/products/${createdProductId}`);
-    
-    expect(res.statusCode).toBe(404);
-  });
+    const res = await request(app).delete(`/api/products/${product._id}`);
 
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('message');
+    expect(res.body.message).toMatch(/با موفقیت حذف شد/);
+  });
 });

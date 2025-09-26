@@ -1,70 +1,43 @@
-// ===========================
-// 📦 وارد کردن کتابخانه‌ها
-// ===========================
+/**
+ * فایل app.js - تنظیمات و مسیرهای اصلی
+ */
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+import morgan from 'morgan';
 
-// ===========================
-// 📂 وارد کردن ماژول‌ها
-// ===========================
-// ماژول محصول (Product Module)
-import ProductModule from './modules/product/index.js';
-
-// بارگذاری متغیرهای محیطی
-dotenv.config();
-
-// ===========================
-// 🚀 ایجاد اپلیکیشن Express
-// ===========================
+// ایجاد نمونه اپ
 const app = express();
 
-// ======================
-// 🛡 میدلورهای عمومی پروژه
-// ======================
-app.use(helmet());             // امن کردن هدرهای HTTP
-app.use(cors());               // کنترل دسترسی Cross-Origin
-app.use(express.json());       // دریافت بدنه JSON
+// ---------- Middleware عمومی ----------
+app.use(cors());
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// =====================
-// 💓 روت تست سلامت سرور
-// =====================
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    message: 'سرور سالم و آماده خدمت است.'
-  });
+// ---------- مسیر پیش‌فرض (Home) ----------
+app.get('/', (req, res) => {
+  res.json({ message: 'به فروشگاه اینترنتی خوش آمدید!' });
 });
 
-// =========================================
-// 🛣 افزودن روت‌های ماژول‌ها با الگوی ماژولار
-// =========================================
-ProductModule.registerProductModule(app);
+// ---------- وارد کردن روت‌های ماژول‌ها ----------
+import productRoutes from './modules/product/interface/routes/productRoutes.js';
+// اگر سایر ماژول‌ها هم آماده هستند، اینجا اضافه کنید
+// import customerRoutes from './modules/user/interface/customerRoutes.js';
+// import adminRoutes from './modules/admin/interface/adminRoutes.js';
 
-// اینجا می‌توان ماژول‌های دیگر را اضافه کرد:
-// UserModule.registerUserModule(app);
-// OrderModule.registerOrderModule(app);
+app.use('/api/products', productRoutes);
+// app.use('/api/customers', customerRoutes);
+// app.use('/api/admins', adminRoutes);
 
-// ===========================
-// ⚡ اتصال به دیتابیس و راه‌اندازی سرور
-// ===========================
-const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pink-store';
+// ---------- هندلینگ مسیرهای ناشناخته ----------
+app.use((req, res) => {
+  res.status(404).json({ error: 'مسیر یافت نشد' });
+});
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
-  });
+// ---------- هندلینگ خطاهای داخلی سرور ----------
+app.use((err, req, res, next) => {
+  console.error('🔥 خطای داخلی سرور:', err.stack);
+  res.status(500).json({ error: 'خطای داخلی سرور' });
+});
 
-// ===========================
-// 📤 خروجی گرفتن از app (برای تست‌های خودکار)
-// ===========================
 export default app;

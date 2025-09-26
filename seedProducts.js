@@ -1,110 +1,64 @@
-// مسیر: seedProducts.js
-
-import mongoose from 'mongoose';
+/**
+ * seedProducts.js
+ * این فایل ۱۰۰ محصول تستی با دسته‌بندی‌های مختلف را داخل دیتابیس GreenShop ذخیره می‌کند.
+ */
 import dotenv from 'dotenv';
-import ProductModel from './src/modules/product/infrastructure/repositories/mongoose/models/ProductModel.js';
-
 dotenv.config();
 
-// 📦 داده‌های نمونه فارسی
-const productNames = [
-  'کرم مرطوب‌کننده دست و صورت',
-  'شامپوی ضدشوره',
-  'روغن آرگان مو',
-  'پنکیک مات',
-  'رژ لب مخملی',
-  'سرم ویتامین C',
-  'ماسک مو کراتینه',
-  'تونر پاک‌کننده پوست',
-  'عطر زنانه گل‌بهار',
-  'ریمل حجم‌دهنده'
-];
+import mongoose from 'mongoose';
+import Product from './src/modules/product/infrastructure/models/ProductModel.js';
 
-const categories = [
-  'مراقبت پوست',
-  'مراقبت مو',
-  'آرایشی',
-  'عطر و ادکلن',
-  'بهداشت شخصی'
-];
+// آدرس اتصال به MongoDB (از فایل .env بخوان یا تنظیم پیش‌فرض با اسم دیتابیس GreenShop)
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/GreenShop';
 
-const brands = [
-  'مای',
-  'سی گل',
-  'هایلند',
-  'Cinere',
-  'Nivea',
-  'Loreal',
-  'Dove'
-];
+async function connectDB() {
+    try {
+        await mongoose.connect(MONGODB_URI);
+        console.log('✅ اتصال به پایگاه داده GreenShop برقرار شد.');
+    } catch (err) {
+        console.error('❌ خطا در اتصال به پایگاه داده:', err.message);
+        process.exit(1);
+    }
+}
 
-const colors = [
-  'قرمز',
-  'صورتی',
-  'مشکی',
-  'طلایی',
-  'برنزی',
-  'نقره‌ای'
-];
+async function seedProducts() {
+    // دسته‌بندی‌های نمونه
+    const categories = [
+        'لباس زیر زنانه',
+        'لباس زیر مردانه',
+        'ست فانتزی',
+        'خانگی راحت',
+        'اسپرت',
+        'مناسبتی',
+        'بچه‌گانه'
+    ];
 
-const images = [
-  'https://example.com/img/product1.jpg',
-  'https://example.com/img/product2.jpg',
-  'https://example.com/img/product3.jpg'
-];
+    const products = [];
 
-// ⛓ اتصال به دیتابیس
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 5000 });
-    console.log('✅ اتصال به دیتابیس موفقیت‌آمیز بود، شروع درج اطلاعات تستی...');
-  } catch (error) {
-    console.error('❌ خطا در اتصال به دیتابیس:', error);
-    process.exit(1);
-  }
-};
+    for (let i = 1; i <= 100; i++) {
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        products.push({
+            name: `محصول شماره ${i}`,
+            description: `توضیحات محصول شماره ${i} (${category})`,
+            price: Math.floor(Math.random() * 500000) + 50000, // قیمت بین 50هزار تا 550هزار
+            category,
+            stock: Math.floor(Math.random() * 50) + 1 // موجودی بین 1 تا 50
+        });
+    }
 
-// 🎲 ساخت محصول تصادفی + بدون هیچ فیلد خالی
-const createRandomProduct = () => {
-  const price = Math.floor(Math.random() * (1500000 - 50000) + 50000);
-  const discount = Math.floor(Math.random() * 31);
-  const finalPrice = price - Math.floor((price * discount) / 100);
+    try {
+        await Product.insertMany(products);
+        console.log(`🎯 ${products.length} محصول در دیتابیس GreenShop اضافه شد.`);
+    } catch (err) {
+        console.error('❌ خطا در ذخیره محصولات:', err.message);
+    } finally {
+        mongoose.connection.close();
+        console.log('🔒 اتصال پایگاه داده بسته شد.');
+    }
+}
 
-  return {
-    name: productNames[Math.floor(Math.random() * productNames.length)],
-    description: 'این محصول با کیفیت بالا، مواد اولیه درجه‌یک و مناسب استفاده روزانه بوده و باعث بهبود سلامت و زیبایی شما می‌شود.',
-    price,
-    discount,
-    finalPrice,
-    brand: brands[Math.floor(Math.random() * brands.length)],
-    category: categories[Math.floor(Math.random() * categories.length)],
-    tags: ['داخلی', 'پرفروش', 'محبوب'],
-    images: [images[Math.floor(Math.random() * images.length)]],
-    variants: [
-      { type: 'رنگ', value: colors[Math.floor(Math.random() * colors.length)] },
-      { type: 'سایز', value: `${[50, 100, 200, 400][Math.floor(Math.random() * 4)]}ml` }
-    ],
-    stock: Math.floor(Math.random() * 200) + 1 // حداقل ۱ تا حداکثر ۲۰۰
-  };
-};
-
-// 🚀 اجرای Seeder
-const seedProducts = async () => {
-  await connectDB();
-  try {
-    await ProductModel.deleteMany();
-    console.log('🗑 محصولات قدیمی پاک شدند.');
-
-    const products = Array.from({ length: 50 }, createRandomProduct);
-    await ProductModel.insertMany(products);
-
-    console.log(`🎉 ${products.length} محصول فارسی کامل با موفقیت اضافه شد!`);
-  } catch (error) {
-    console.error('❌ خطا در درج محصولات:', error);
-  } finally {
-    await mongoose.connection.close();
-    console.log('🔌 اتصال به دیتابیس بسته شد.');
-  }
-};
-
-seedProducts();
+// اجرای برنامه
+(async () => {
+    await connectDB();
+    await seedProducts();
+})();
