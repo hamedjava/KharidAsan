@@ -4,6 +4,8 @@ import morgan from 'morgan';
 
 import productRoutes from './modules/product/interface/routes/productRoutes.js';
 import adminRoutes from './modules/users/admin/interface/routes/adminRoutes.js';  // اصلاح مسیر
+import sellerRoutes from './modules/users/seller/interface/routes/sellerRoutes.js';
+import customerRoutes from './modules/users/customer/interface/routes/customerRoutes.js';
 
 const app = express();
 
@@ -18,6 +20,9 @@ app.get('/', (req, res) => {
 
 app.use('/api/products', productRoutes);
 app.use('/api/admins', adminRoutes);
+app.use('/api/sellers', sellerRoutes);
+app.use('/api/customers', customerRoutes);
+
 
 app.use((req, res) => {
   res.status(404).json({ error: 'مسیر یافت نشد' });
