@@ -1,4 +1,3 @@
-// src/database/mongoose.js
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
@@ -12,7 +11,7 @@ export default async function connectDB() {
   }
 
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI);  // بدون options قدیمی
     console.log('✅ اتصال به MongoDB برقرار شد.');
   } catch (error) {
     console.error('❌ خطا در اتصال به MongoDB:', error);
