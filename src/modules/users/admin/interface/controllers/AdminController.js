@@ -3,7 +3,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import otpService from '../../../../../shared/services/otpService.js';
 
-// ✅ ایجاد ادمین
+/* ========================
+   ✅ ایجاد ادمین
+======================== */
 export const createAdmin = async (req, res) => {
   try {
     const { username, fullName, email, password, mobile } = req.body;
@@ -23,65 +25,76 @@ export const createAdmin = async (req, res) => {
     });
 
     const savedAdmin = await admin.save();
-    res.status(201).json(savedAdmin);
+    return res.status(201).json(savedAdmin);
   } catch (err) {
     console.error('خطا در createAdmin:', err);
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ دریافت همه‌ی ادمین‌ها
+/* ========================
+   ✅ دریافت همه ادمین‌ها
+======================== */
 export const getAdmins = async (req, res) => {
   try {
     const admins = await Admin.find();
-    res.json(admins);
+    return res.json(admins);
   } catch (err) {
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    console.error('خطا در getAdmins:', err);
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ دریافت ادمین بر اساس ID
+/* ========================
+   ✅ دریافت ادمین بر اساس ID
+======================== */
 export const getAdminById = async (req, res) => {
   try {
     const admin = await Admin.findById(req.params.id);
     if (!admin) return res.status(404).json({ error: 'ادمین یافت نشد' });
-    res.json(admin);
+    return res.json(admin);
   } catch (err) {
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    console.error('خطا در getAdminById:', err);
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ آپدیت ادمین
+/* ========================
+   ✅ آپدیت ادمین
+======================== */
 export const updateAdmin = async (req, res) => {
   try {
     const updated = await Admin.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'ادمین یافت نشد' });
-    res.json(updated);
+    return res.json(updated);
   } catch (err) {
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    console.error('خطا در updateAdmin:', err);
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ حذف ادمین
+/* ========================
+   ✅ حذف ادمین
+======================== */
 export const deleteAdmin = async (req, res) => {
   try {
     const deleted = await Admin.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: 'ادمین یافت نشد' });
-    res.json({ message: 'ادمین حذف شد' });
+    return res.json({ message: 'ادمین حذف شد' });
   } catch (err) {
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    console.error('خطا در deleteAdmin:', err);
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ ارسال OTP
+/* ========================
+   ✅ ارسال OTP
+======================== */
 export const sendOtp = async (req, res) => {
   try {
     const { mobile } = req.body;
     const admin = await Admin.findOne({ mobile });
-
-    if (!admin) {
-      return res.status(404).json({ error: 'ادمین یافت نشد' });
-    }
+    if (!admin) return res.status(404).json({ error: 'ادمین یافت نشد' });
 
     const otpGenerated = otpService.generateOtp();
     admin.otpCode = otpGenerated;
@@ -89,17 +102,19 @@ export const sendOtp = async (req, res) => {
     await admin.save();
 
     console.log(`کد OTP برای موبایل ${mobile} ارسال شد: ${otpGenerated}`);
-    res.status(200).json({
+    return res.status(200).json({
       message: 'کد OTP ارسال شد',
-      otpCode: otpGenerated // فقط برای تست
+      otpCode: otpGenerated // ⚠ فقط برای محیط تست
     });
   } catch (err) {
     console.error('خطا در sendOtp:', err);
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ ورود با OTP
+/* ========================
+   ✅ ورود با OTP
+======================== */
 export const loginWithOTP = async (req, res) => {
   try {
     const { mobile, otp } = req.body;
@@ -119,56 +134,62 @@ export const loginWithOTP = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
+      { id: admin._id, email: admin.email, role: admin.role },
       process.env.JWT_SECRET || 'test_secret',
       { expiresIn: '1h' }
     );
 
-
-    res.status(200).json({
+    return res.status(200).json({
       message: 'ورود موفق با OTP',
       token,
       admin
     });
   } catch (err) {
     console.error('خطا در loginWithOTP:', err);
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
 };
 
-// ✅ ورود با ایمیل و رمز عبور
+/* ========================
+   ✅ ورود با ایمیل/رمز
+======================== */
 export const loginWithEmail = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ error: 'ایمیل و رمز عبور الزامی است' });
     }
 
     const admin = await Admin.findOne({ email });
-
-    if (!admin) {
-      return res.status(404).json({ error: 'ادمین یافت نشد' });
-    }
+    if (!admin) return res.status(404).json({ error: 'ادمین یافت نشد' });
 
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'رمز عبور اشتباه است' });
-    }
+    if (!isMatch) return res.status(401).json({ error: 'رمز عبور اشتباه است' });
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
-      process.env.JWT_SECRET,
+      { id: admin._id, email: admin.email, role: admin.role },
+      process.env.JWT_SECRET || 'test_secret',
       { expiresIn: '1h' }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'ورود موفق',
       token,
       admin
     });
   } catch (err) {
     console.error('خطا در loginWithEmail:', err);
-    res.status(500).json({ error: 'خطای داخلی سرور' });
+    return res.status(500).json({ error: 'خطای داخلی سرور' });
   }
+};
+
+/* ========================
+   ✅ مسیر امن RBAC
+======================== */
+export const getSecureData = (req, res) => {
+  return res.status(200).json({
+    message: 'این داده فقط برای سوپرادمین قابل دسترسی است',
+    user: req.user,
+    role: req.user?.role || 'unknown'
+  });
 };

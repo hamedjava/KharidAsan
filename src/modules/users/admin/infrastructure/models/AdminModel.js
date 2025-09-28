@@ -1,18 +1,21 @@
 import mongoose from 'mongoose';
 
 const AdminSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  mobile: { type: String, required: true, unique: true },  // اضافه شده
+  username: { type: String, required: true, unique: true },           // نام کاربری ادمین
+  password: { type: String, required: true },                         // رمز عبور هش شده
+  mobile: { type: String, required: true, unique: true },              // شماره موبایل برای OTP
 
-  otpCode: { type: String },          // کد OTP ذخیره می‌شود
-  otpExpire: { type: Date },          // تاریخ انقضای کد OTP
-  isOtpVerified: { type: Boolean, default: false },  // آیا موبایل تایید شده یا خیر
-
-  // اگر فیلدهای حیاتی دیگه‌ای مد نظر دارید اضافه کنید، مثلا:
-  email: { type: String, unique: true, sparse: true },
-  fullName: { type: String },
-  // ...
+  // 🔐 فیلدهای مربوط به OTP
+  otpCode: { type: String },                                          // کد OTP
+  otpExpire: { type: Date },                                          // زمان انقضای OTP
+  isOtpVerified: { type: Boolean, default: false },                   // وضعیت تایید موبایل
+  
+  // 📧 اطلاعات اضافی
+  email: { type: String, unique: true, sparse: true },                 // ایمیل (یونیک اما غیرضروری)
+  fullName: { type: String },                                          // نام کامل
+  
+  // 🛡 نقش ادمین برای کنترل سطح دسترسی
+  role: { type: String, enum: ['super_admin', 'manager'], default: 'manager' },
 
 }, {
   timestamps: true,
