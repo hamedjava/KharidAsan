@@ -1,36 +1,31 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-
-import productRoutes from './modules/product/interface/routes/productRoutes.js';
-import adminRoutes from './modules/users/admin/interface/routes/adminRoutes.js';  // اصلاح مسیر
-import sellerRoutes from './modules/users/seller/interface/routes/sellerRoutes.js';
-import customerRoutes from './modules/users/customer/interface/routes/customerRoutes.js';
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const routes = require('./interfaces/http/routes');
 
 const app = express();
 
+// 🛡️ پیکربندی امنیت و میان‌افزارها
+app.use(helmet());
 app.use(cors());
-app.use(morgan('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 
-app.get('/', (req, res) => {
-  res.json({ message: 'به فروشگاه اینترنتی خوش آمدید!' });
-});
+// 🚦 محدودیت تعداد درخواست‌ها در هر دقیقه
+app.use(rateLimit({ windowMs: 60 * 1000, max: 60 }));
 
-app.use('/api/products', productRoutes);
-app.use('/api/admins', adminRoutes);
-app.use('/api/sellers', sellerRoutes);
-app.use('/api/customers', customerRoutes);
+// 📌 مسیر اصلی API
+app.use('/api', routes);
 
-
-app.use((req, res) => {
-  res.status(404).json({ error: 'مسیر یافت نشد' });
-});
-
+// ⚠️ مدیریت خطاهای کلی
 app.use((err, req, res, next) => {
-  console.error('🔥 خطای داخلی سرور:', err.stack);
-  res.status(500).json({ error: 'خطای داخلی سرور' });
+  console.error('🔥 خطا:', err);
+  res.status(err.statusCode || 500).json({
+    موفق: false,
+    پیام: err.message || 'خطای داخلی سرور',
+  });
 });
 
-export default app;
+module.exports = app;
