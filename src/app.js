@@ -1,31 +1,52 @@
+// بارگذاری ماژول‌های اصلی
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const routes = require('./interfaces/http/routes');
 
+// ایجاد اپ
 const app = express();
 
-// 🛡️ پیکربندی امنیت و میان‌افزارها
+// 🛡 حفاظت امنیتی پایه
 app.use(helmet());
+
+// 🌐 فعالسازی CORS
 app.use(cors());
+
+// 📦 قابلیت پردازش JSON و فرم دیتا
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: true }));
 
-// 🚦 محدودیت تعداد درخواست‌ها در هر دقیقه
-app.use(rateLimit({ windowMs: 60 * 1000, max: 60 }));
+// 📝 لاگ درخواست‌ها
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+}
 
-// 📌 مسیر اصلی API
-app.use('/api', routes);
+// ⏳ محدودیت تعداد درخواست‌ها
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 دقیقه
+    max: 100, // حداکثر 100 درخواست
+    message: { error: 'تعداد درخواست‌های شما بیش از حد مجاز است' }
+}));
 
-// ⚠️ مدیریت خطاهای کلی
+// 📌 مسیرهای Admin
+const adminAuthRoutes = require('./modules/user/admin/interfaces/http/admin.routes');
+const adminProfileRoutes = require('./modules/user/admin/interfaces/http/adminProfile.routes');
+
+
+app.use('/api/admin', adminAuthRoutes);
+app.use('/api/admin', adminProfileRoutes);
+
+// 🛠  مسیرهای اشتباه
+app.use((req, res) => {
+    res.status(404).json({ error: 'مسیر مورد نظر یافت نشد' });
+});
+
+// ⚠️ هندل خطاها
 app.use((err, req, res, next) => {
-  console.error('🔥 خطا:', err);
-  res.status(err.statusCode || 500).json({
-    موفق: false,
-    پیام: err.message || 'خطای داخلی سرور',
-  });
+    console.error('❌ خطای داخلی سرور:', err.stack);
+    res.status(500).json({ error: 'خطای داخلی سرور' });
 });
 
 module.exports = app;

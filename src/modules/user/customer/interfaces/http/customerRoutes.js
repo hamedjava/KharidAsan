@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const controller = require('../controllers/customerController');
 
-// 📌 مثال ساده برای GET
-router.get('/', (req, res) => {
-  res.json({ پیام: 'لیست مشتری‌ها' });
-});
+router.get('/', controller.getAll);
 
 module.exports = router;

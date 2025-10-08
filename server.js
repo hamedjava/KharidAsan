@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
     await connectDB();
     app.listen(PORT, () => console.log(`✅ سرور با موفقیت روی پورت ${PORT} اجرا شد.`));
   } catch (err) {
-    console.error('❌ خطا در اتصال به پایگاه داده:', err.message);
+    console.error('❌ خطا در اتصال به دیتابیس:', err.message);
     process.exit(1);
   }
 })();
