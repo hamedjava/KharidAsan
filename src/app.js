@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 📝 لاگ درخواست‌ها
+// 📝 لاگ درخواست‌ها فقط در حالت توسعه
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === 'development') {
 // ⏳ محدودیت تعداد درخواست‌ها
 app.use(rateLimit({
     windowMs: 15 * 60 * 1000, // 15 دقیقه
-    max: 100, // حداکثر 100 درخواست
+    max: 100, // حداکثر 100 درخواست در پنجره‌ی زمانی
     message: { error: 'تعداد درخواست‌های شما بیش از حد مجاز است' }
 }));
 
@@ -44,15 +44,25 @@ const sellerProfileRoutes = require('./modules/user/seller/interfaces/http/selle
 app.use('/api/seller', sellerAuthRoutes);
 app.use('/api/seller', sellerProfileRoutes);
 
-app.use('/api/customer', require('./modules/user/customer/interfaces/http/customer.routes.js'));
-app.use('/api/customer', require('./modules/user/customer/interfaces/http/customerProfile.routes.js'));
+// 📌 مسیرهای Customer
+const customerAuthRoutes = require('./modules/user/customer/interfaces/http/customer.routes');
+const customerProfileRoutes = require('./modules/user/customer/interfaces/http/customerProfile.routes');
 
-// 🛠 مسیرهای اشتباه
+app.use('/api/customer', customerAuthRoutes);
+app.use('/api/customer', customerProfileRoutes);
+
+// 📌 مسیرهای Product
+const productRoutes = require('./modules/product/interfaces/http/product.routes');
+// فقط فروشندگان مجاز می‌توانند محصولات را مدیریت کنند؛ 
+// ولی مسیرهای عمومی مثل get/list بدون middleware هم کار می‌کنند.
+app.use('/api/product', productRoutes);
+
+// 🛠 هندل مسیرهای اشتباه (404)
 app.use((req, res) => {
     res.status(404).json({ error: 'مسیر مورد نظر یافت نشد' });
 });
 
-// ⚠️ هندل خطاها
+// ⚠️ هندل خطاهای عمومی
 app.use((err, req, res, next) => {
     console.error('❌ خطای داخلی سرور:', err.stack);
     res.status(500).json({ error: 'خطای داخلی سرور' });
