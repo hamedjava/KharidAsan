@@ -34,11 +34,20 @@ app.use(rateLimit({
 const adminAuthRoutes = require('./modules/user/admin/interfaces/http/admin.routes');
 const adminProfileRoutes = require('./modules/user/admin/interfaces/http/adminProfile.routes');
 
-
 app.use('/api/admin', adminAuthRoutes);
 app.use('/api/admin', adminProfileRoutes);
 
-// 🛠  مسیرهای اشتباه
+// 📌 مسیرهای Seller
+const sellerAuthRoutes = require('./modules/user/seller/interfaces/http/seller.routes');
+const sellerProfileRoutes = require('./modules/user/seller/interfaces/http/sellerProfile.routes');
+
+app.use('/api/seller', sellerAuthRoutes);
+app.use('/api/seller', sellerProfileRoutes);
+
+app.use('/api/customer', require('./modules/user/customer/interfaces/http/customer.routes.js'));
+app.use('/api/customer', require('./modules/user/customer/interfaces/http/customerProfile.routes.js'));
+
+// 🛠 مسیرهای اشتباه
 app.use((req, res) => {
     res.status(404).json({ error: 'مسیر مورد نظر یافت نشد' });
 });
