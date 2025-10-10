@@ -1,48 +1,19 @@
-const bcrypt = require('bcryptjs');
-const sellerRepository = require('../../infrastructure/repositories/seller.repository.js');
+/**
+ * مسیر: seller/domain/usecases/changePassword.usecase.js
+ */
+const sellerRepository = require('../../infrastructure/repositories/seller.repository');
+const bcrypt = require('bcrypt');
 
-module.exports = async (sellerId, currentPassword, newPassword, confirmNewPassword) => {
-  // چک ورودی‌ها
-  if (!currentPassword || !newPassword || !confirmNewPassword) {
-    const err = new Error('All password fields are required');
-    err.status = 400;
-    throw err;
-  }
-
-  if (newPassword !== confirmNewPassword) {
-    const err = new Error('New passwords do not match');
-    err.status = 400;
-    throw err;
-  }
-
-  if (newPassword.length < 6) {
-    const err = new Error('New password must be at least 6 characters long');
-    err.status = 400;
-    throw err;
-  }
-
-  // پیدا کردن فروشنده
+module.exports = async (sellerId, oldPassword, newPassword) => {
   const seller = await sellerRepository.findById(sellerId);
-  if (!seller) {
-    const err = new Error('Seller not found');
-    err.status = 404;
-    throw err;
-  }
+  if (!seller) throw new Error('Seller not found');
 
-  // بررسی رمز فعلی
-  const isMatch = await bcrypt.compare(currentPassword, seller.password);
-  if (!isMatch) {
-    const err = new Error('Current password is incorrect');
-    err.status = 401;
-    throw err;
-  }
+  const isMatch = await bcrypt.compare(oldPassword, seller.password);
+  if (!isMatch) throw new Error('Current password is incorrect');
 
-  // هش کردن رمز جدید
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-  // آپدیت در دیتابیس
-  seller.password = hashedPassword;
+  const hashed = await bcrypt.hash(newPassword, 10);
+  seller.password = hashed;
   await seller.save();
 
-  return { id: seller.id, email: seller.email, mobile: seller.mobile };
+  return { message: 'Password changed successfully' };
 };

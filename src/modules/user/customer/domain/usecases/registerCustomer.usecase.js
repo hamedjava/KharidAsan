@@ -7,5 +7,5 @@ module.exports = async function registerCustomerUseCase({ name, email, mobile, p
   if (existingEmail || existingMobile) throw new Error('Customer already exists');
 
   const hashed = await bcrypt.hash(password, 10);
-  return await customerRepository.create({ name, email, mobile, password: hashed });
+  return await customerRepository.create({ name, email, mobile, password: hashed, role: 'customer' });
 };

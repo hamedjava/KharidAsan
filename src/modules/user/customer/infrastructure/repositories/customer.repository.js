@@ -1,4 +1,4 @@
-const Customer = require('../../../customer/infrastructure/database/mongoos/customer.model.js');
+const Customer = require('../../../../user/customer/infrastructure/database/mongoos/customer.model.js');
 const CustomerEntity = require('../../domain/entities/customer.entity');
 
 module.exports = {
@@ -9,12 +9,14 @@ module.exports = {
   },
 
   async findByMobile(mobile) {
-    const doc = await Customer.findOne({ mobile });
+    const normalized = String(mobile).trim();
+    const doc = await Customer.findOne({ mobile: normalized, role: { $regex: /^customer$/i } });
     return CustomerEntity.fromDatabase(doc);
   },
 
   async findByEmail(email) {
-    const doc = await Customer.findOne({ email });
+    const normalized = String(email).trim().toLowerCase();
+    const doc = await Customer.findOne({ email: normalized, role: { $regex: /^customer$/i } });
     return CustomerEntity.fromDatabase(doc);
   },
 

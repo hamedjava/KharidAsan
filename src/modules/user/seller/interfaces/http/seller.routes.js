@@ -1,11 +1,7 @@
-/**
- * مسیر: seller/interfaces/http/seller.routes.js
- * وظایف:
- *  - مسیرهای ثبت‌نام فروشنده، ارسال و تایید OTP
- */
+// seller/interfaces/http/sellerAuth.routes.js
 const express = require('express');
 const router = express.Router();
-const sellerAuthController = require('../controllers/sellerAuth.controller');
+const sellerAuthController = require('../controllers/sellerAuth.controller.js');
 
 router.post('/register', sellerAuthController.register);
 router.post('/send-otp', sellerAuthController.sendOTP);

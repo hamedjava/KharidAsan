@@ -1,78 +1,35 @@
-/**
- * مسیر: seller/interfaces/controllers/sellerProfile.controller.js
- * وظایف:
- *  - دریافت پروفایل فروشنده
- *  - بروزرسانی پروفایل
- *  - تغییر رمز عبور
- */
-
-const getSellerProfile = require('../../domain/usecases/getSellerProfile.usecase');
-const updateSellerProfile = require('../../domain/usecases/updateSellerProfile.usecase');
-const changeSellerPassword = require('../../domain/usecases/changeSellerPassword.usecase');
+// seller/interfaces/controllers/sellerProfile.controller.js
+const sellerRepository = require('../../infrastructure/repositories/seller.repository.js');
+const changePasswordUseCase = require('../../domain/usecases/changeSellerPassword.usecase.js');
 
 module.exports = {
-  /**
-   * دریافت پروفایل فروشنده
-   */
   async get(req, res) {
     try {
-      const seller = await getSellerProfile(req.seller.id);
-
-      if (!seller) {
-        return res.status(404).json({ error: 'Seller profile not found' });
-      }
-
-      // حذف فیلدهای حساس قبل از ارسال
-      const { password, ...safeSellerData } = seller.toObject ? seller.toObject() : seller;
-      res.status(200).json(safeSellerData);
-
+      const seller = await sellerRepository.findById(req.userId);
+      if (!seller) return res.status(404).json({ error: 'Seller not found' });
+      const { password, otp, ...data } = seller.toObject();
+      res.status(200).json(data);
     } catch (err) {
-      console.error('❌ Error fetching seller profile:', err.message);
-      res.status(500).json({ error: 'Server error while fetching profile' });
+      res.status(500).json({ error: err.message });
     }
   },
 
-  /**
-   * بروزرسانی پروفایل فروشنده
-   */
   async update(req, res) {
     try {
-      const updatedSeller = await updateSellerProfile(req.seller.id, req.body);
-
-      if (!updatedSeller) {
-        return res.status(404).json({ error: 'Seller profile not found for update' });
-      }
-
-      const { password, ...safeUpdatedData } = updatedSeller.toObject ? updatedSeller.toObject() : updatedSeller;
-      res.status(200).json({
-        message: 'Profile updated successfully',
-        seller: safeUpdatedData
-      });
-
+      const updated = await sellerRepository.updateById(req.userId, req.body);
+      res.status(200).json({ message: 'Profile updated successfully', seller: updated });
     } catch (err) {
-      console.error('❌ Error updating seller profile:', err.message);
-      const status = err.status || 500;
-      res.status(status).json({ error: err.message || 'Server error while updating profile' });
+      res.status(500).json({ error: err.message });
     }
   },
 
-  /**
-   * تغییر رمز عبور فروشنده
-   */
   async changePassword(req, res) {
     try {
-      const { currentPassword, newPassword, confirmNewPassword } = req.body;
-      const result = await changeSellerPassword(req.seller.id, currentPassword, newPassword, confirmNewPassword);
-
-      res.status(200).json({
-        message: 'Password changed successfully',
-        seller: result
-      });
-
+      const { currentPassword, newPassword } = req.body;
+      const result = await changePasswordUseCase(req.userId, currentPassword, newPassword);
+      res.status(200).json(result);
     } catch (err) {
-      console.error('❌ Error changing seller password:', err.message);
-      const status = err.status || 500;
-      res.status(status).json({ error: err.message || 'Server error while changing password' });
+      res.status(400).json({ error: err.message });
     }
-  }
+  },
 };

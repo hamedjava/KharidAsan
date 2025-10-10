@@ -1,30 +1,35 @@
-const AdminModel = require('../../../admin/infrastructure/database/mongoose/admin.model.js');
+const AdminModel = require('../database/mongoose/admin.model.js');
 
 class AdminRepository {
-    async create(adminData) {
-        const admin = new AdminModel(adminData);
-        return await admin.save();
-    }
+  async create(data) {
+    const admin = new AdminModel(data);
+    return admin.save();
+  }
 
-    async findByEmail(email) {
-        return await AdminModel.findOne({ email });
-    }
+  async findByEmail(email) {
+    return AdminModel.findOne({ email: String(email).trim() });
+  }
 
-    async findByMobile(mobile) {
-        return await AdminModel.findOne({ mobile });
-    }
+  async findByMobile(mobile) {
+    const normalized = String(mobile).trim();
+    console.log(`📊 findByMobile call → ${normalized}`);
+    const admin = await AdminModel.findOne({ mobile: normalized });
 
-    async findById(id) {
-        return await AdminModel.findById(id);
-    }
+    console.log(`📊 findByMobile result → ${admin ? admin.email : '❌ not found'}`);
+    return admin;
+  }
 
-    async updateById(id, updateData) {
-        return await AdminModel.findByIdAndUpdate(id, updateData, { new: true });
-    }
+  async findById(id) {
+    return AdminModel.findById(id);
+  }
 
-    async changePassword(id, hashedPassword) {
-        return await AdminModel.findByIdAndUpdate(id, { password: hashedPassword });
-    }
+  async updateById(id, data) {
+    return AdminModel.findByIdAndUpdate(id, data, { new: true });
+  }
+
+  async changePassword(id, hashedPassword) {
+    return AdminModel.findByIdAndUpdate(id, { password: hashedPassword });
+  }
 }
 
 module.exports = new AdminRepository();

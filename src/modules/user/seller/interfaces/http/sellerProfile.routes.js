@@ -1,20 +1,13 @@
-/**
- * مسیر: seller/interfaces/http/sellerProfile.routes.js
- * وظایف:
- *  - نمایش و بروزرسانی پروفایل فروشنده (JWT Protected)
- */
+// seller/interfaces/http/sellerProfile.routes.js
 const express = require('express');
 const router = express.Router();
-const sellerProfileController = require('../controllers/sellerProfile.controller'); 
-const sellerAuthMiddleware = require('../middlewares/sellerAuth.middleware');
 
+const sellerProfileController = require('../controllers/sellerProfile.controller.js');
+const authMiddleware = require('../../../../../core/auth/interfaces/middlewares/auth.middleware.js');
+const roleMiddleware = require('../../../../../core/auth/interfaces/middlewares/role.middleware.js');
 
-// 🛡 مسیر دریافت پروفایل فروشنده
-router.get('/profile', sellerAuthMiddleware, sellerProfileController.get);
-
-// 🛠 مسیر بروزرسانی پروفایل فروشنده
-router.put('/profile', sellerAuthMiddleware, sellerProfileController.update);
-
-router.put('/change-password', sellerAuthMiddleware, sellerProfileController.changePassword);
+router.get('/profile', authMiddleware, roleMiddleware(['seller']), sellerProfileController.get);
+router.put('/profile', authMiddleware, roleMiddleware(['seller']), sellerProfileController.update);
+router.put('/change-password', authMiddleware, roleMiddleware(['seller']), sellerProfileController.changePassword);
 
 module.exports = router;

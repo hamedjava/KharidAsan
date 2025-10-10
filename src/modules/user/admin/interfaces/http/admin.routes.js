@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const AdminAuthController = require('../controllers/adminAuth.controller');
+const adminAuthController = require('../controllers/adminAuth.controller.js');
 
-router.post('/register', AdminAuthController.register);
-router.post('/send-otp', AdminAuthController.sendOTP);
-router.post('/verify-otp', AdminAuthController.verifyOTP);
+router.post('/register', adminAuthController.register);
+router.post('/send-otp', adminAuthController.sendOTP);
+router.post('/verify-otp', adminAuthController.verifyOTP);
 
 module.exports = router;
